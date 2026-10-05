@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Posy</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Posy">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EAF0F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121C29" media="(prefers-color-scheme: dark)">
+<style>
+:root{
+  --bg:#EAF0F7; --ink:#1D2A3A; --soft:#5E6D80; --line:#C3D0E0; --field:#F8FAFD;
+  --poppy:#E2492F; --cosmos:#E98AB0; --corn:#5B7FBF; --sun:#F2B705; --leaf:#4A7C59; --centre:#3A2A1E;
+  --on-leaf:#fff; --flash:rgba(242,183,5,.30);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#121C29; --ink:#E6EDF6; --soft:#93A3B8; --line:#2B3C52; --field:#1A2738;
+    --corn:#7E9FDB; --leaf:#6FA67F; --on-leaf:#0F1A14; --centre:#2A1D14; --flash:rgba(242,183,5,.22);
+  }
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:17px/1.4 ui-rounded,"SF Pro Rounded","Nunito","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh;
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--corn);outline-offset:2px}
+[hidden]{display:none!important}
+
+.wrap{
+  max-width:480px;margin:0 auto;
+  padding:0 max(20px,env(safe-area-inset-right)) calc(56px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));
+}
+
+/* header: the title stands on the ground line, flowers grow beside it */
+.top{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+  padding-top:max(24px,env(safe-area-inset-top));
+  border-bottom:2px solid var(--line);
+}
+h1{margin:0 0 8px;font-size:34px;line-height:1;font-weight:700;letter-spacing:-.01em}
+#meadow{display:block;width:min(220px,62%);height:auto;overflow:visible}
+.stem{fill:none;stroke:var(--leaf);stroke-width:2;stroke-linecap:round}
+.leaf{fill:var(--leaf)}
+
+h2{margin:0;font-size:15px;font-weight:600;color:var(--soft)}
+section{margin-top:30px}
+.head{display:flex;align-items:center;justify-content:space-between;min-height:32px}
+.note{margin:10px 0 0;color:var(--soft);font-size:16px;max-width:34ch}
+
+/* add */
+#add{display:flex;gap:8px;margin-top:26px}
+#q{
+  flex:1;min-width:0;height:52px;padding:0 16px;border-radius:14px;
+  border:1.5px solid var(--line);background:var(--field);outline-offset:0;
+}
+#q::placeholder{color:var(--soft)}
+#q:focus{border-color:var(--corn)}
+.btn{
+  height:52px;padding:0 20px;border:0;border-radius:14px;
+  background:var(--leaf);color:var(--on-leaf);font-weight:600;
+}
+.btn:active{filter:brightness(.92)}
+
+/* list */
+.list{list-style:none;margin:6px 0 0;padding:0}
+.row{display:flex;align-items:center;border-radius:12px}
+.row.flash{animation:flash .8s ease-out}
+@keyframes flash{from{background:var(--flash)}to{background:transparent}}
+.item{
+  flex:1;min-width:0;display:flex;align-items:center;gap:8px;min-height:54px;padding:0 4px;
+  background:none;border:0;border-radius:12px;text-align:left;font-size:18px;
+}
+.txt{overflow-wrap:anywhere;transition:color .25s}
+.box{flex:none;width:38px;height:38px;overflow:visible}
+.ring{fill:none;stroke:var(--soft);stroke-width:1.8;opacity:.75;transition:opacity .2s}
+.bud{transition:opacity .2s}
+.bloom{transform:scale(0) rotate(-50deg);transform-origin:0 0;transition:transform .5s cubic-bezier(.3,1.45,.5,1)}
+.done .bloom{transform:scale(1) rotate(0)}
+.done .ring,.done .bud{opacity:0}
+.done .txt{color:var(--soft);text-decoration:line-through}
+.del{
+  flex:none;width:44px;height:44px;display:grid;place-items:center;
+  background:none;border:0;border-radius:12px;color:var(--soft);
+}
+.del svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.del:active{color:var(--poppy)}
+
+.actions{display:flex;flex-wrap:wrap;gap:4px 20px;margin-top:6px}
+.text-btn{
+  background:none;border:0;padding:10px 0;min-height:44px;font-size:15px;color:var(--soft);
+  text-decoration:underline;text-underline-offset:3px;
+}
+.text-btn:active{color:var(--ink)}
+
+/* previously used items */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 15px;border-radius:999px;
+  background:transparent;border:1.5px solid var(--line);font-size:16px;
+}
+.chip:active{background:var(--field)}
+.chip svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;color:var(--poppy)}
+.editing .chip{border-style:dashed;border-color:var(--poppy)}
+
+.foot{display:flex;flex-wrap:wrap;gap:0 20px;margin-top:44px}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:16px;max-width:min(440px,calc(100vw - 32px));
+  padding:12px 16px;border-radius:14px;background:var(--ink);color:var(--bg);font-size:15px;
+  opacity:0;visibility:hidden;transform:translate(-50%,14px);
+  transition:opacity .2s,transform .2s,visibility .2s;
+}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.toast button{background:none;border:0;padding:8px 2px;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <h1>Posy</h1>
+    <svg id="meadow" viewBox="0 0 220 96" aria-hidden="true"></svg>
+  </header>
+
+  <form id="add" autocomplete="off">
+    <input id="q" type="text" enterkeyhint="done" autocapitalize="sentences" maxlength="60">
+    <button class="btn" type="submit" data-t="add"></button>
+  </form>
+
+  <section>
+    <h2 data-t="toBuy"></h2>
+    <ul id="list" class="list"></ul>
+    <p id="empty" class="note" data-t="empty"></p>
+    <div class="actions">
+      <button id="rm-done" class="text-btn" type="button" data-t="removeTicked"></button>
+      <button id="rm-all" class="text-btn" type="button" data-t="clearAll"></button>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2 data-t="used"></h2>
+      <button id="edit" class="text-btn" type="button"></button>
+    </div>
+    <div id="chips" class="chips"></div>
+    <p id="used-empty" class="note" data-t="usedEmpty"></p>
+  </section>
+
+  <footer class="foot">
+    <button id="backup" class="text-btn" type="button" data-t="backup"></button>
+    <button id="restore" class="text-btn" type="button" data-t="restore"></button>
+    <button id="lang" class="text-btn" type="button" data-t="lang"></button>
+  </footer>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toast-msg"></span>
+  <button id="undo" type="button" data-t="undo"></button>
+</div>
+<input type="file" id="file" hidden>
+
+<script>
+(() => {
+'use strict';
+
+const KEY = 'posy.v1', LKEY = 'posy.lang';
+
+const S = {
+  it: {
+    placeholder: 'Cosa ti serve?', add: 'Aggiungi', toBuy: 'Da comprare',
+    empty: 'La lista è vuota. Scrivi un prodotto qui sopra o toccane uno dei già usati.',
+    used: 'Già usati', usedEmpty: 'Qui compariranno i prodotti che aggiungi.',
+    edit: 'Modifica', done: 'Fine', removeTicked: 'Rimuovi spuntati', clearAll: 'Svuota lista',
+    backup: 'Salva copia', restore: 'Ripristina', undo: 'Annulla', lang: 'English',
+    remove: n => `Rimuovi ${n}`, dropUsed: n => `Togli ${n} dai già usati`,
+    removedOne: n => `${n} rimosso`, droppedUsed: n => `${n} tolto dai già usati`,
+    removedMany: k => k === 1 ? '1 prodotto rimosso' : `${k} prodotti rimossi`,
+    cleared: 'Lista svuotata', restored: 'Copia ripristinata',
+    badFile: 'File non valido. Scegli una copia salvata da Posy.'
+  },
+  en: {
+    placeholder: 'What do you need?', add: 'Add', toBuy: 'To buy',
+    empty: 'The list is empty. Type an item above or tap one you used before.',
+    used: 'Used before', usedEmpty: 'Items you add will show up here.',
+    edit: 'Edit', done: 'Done', removeTicked: 'Remove ticked', clearAll: 'Clear list',
+    backup: 'Back up', restore: 'Restore', undo: 'Undo', lang: 'Italiano',
+    remove: n => `Remove ${n}`, dropUsed: n => `Remove ${n} from used before`,
+    removedOne: n => `${n} removed`, droppedUsed: n => `${n} removed from used before`,
+    removedMany: k => k === 1 ? '1 item removed' : `${k} items removed`,
+    cleared: 'List cleared', restored: 'Backup restored',
+    badFile: 'Invalid file. Choose a backup saved from Posy.'
+  }
+};
+
+/* ---------- flowers ---------- */
+const KINDS = {
+  poppy:  { n: 4,  color: 'var(--poppy)',  pw: .50, ph: .50, off: .50, cent: 'var(--centre)', cr: .26 },
+  cosmos: { n: 8,  color: 'var(--cosmos)', pw: .22, ph: .46, off: .52, cent: 'var(--sun)',    cr: .22 },
+  corn:   { n: 8,  color: 'var(--corn)',   pw: .16, ph: .50, off: .55, cent: 'var(--centre)', cr: .17 },
+  sun:    { n: 10, color: 'var(--sun)',    pw: .17, ph: .42, off: .56, cent: 'var(--centre)', cr: .30 }
+};
+const KIND_KEYS = Object.keys(KINDS);
+
+function bloom(kind, x, y, r) {
+  const k = KINDS[kind];
+  let s = '';
+  for (let i = 0; i < k.n; i++) {
+    s += `<ellipse cx="${x}" cy="${(y - r * k.off).toFixed(2)}" rx="${(r * k.pw).toFixed(2)}" ry="${(r * k.ph).toFixed(2)}" ` +
+         `style="fill:${k.color}" transform="rotate(${(i * 360 / k.n).toFixed(1)} ${x} ${y})"/>`;
+  }
+  return s + `<circle cx="${x}" cy="${y}" r="${(r * k.cr).toFixed(2)}" style="fill:${k.cent}"/>`;
+}
+
+function kindOf(name) {
+  let h = 0;
+  for (const ch of name.trim().toLocaleLowerCase()) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+  return KIND_KEYS[h % KIND_KEYS.length];
+}
+
+function drawMeadow() {
+  const fl = [
+    { k: 'corn',   x: 14,  h: 46, r: 9,  l: -3 },
+    { k: 'poppy',  x: 46,  h: 72, r: 12, l: 4 },
+    { k: 'sun',    x: 84,  h: 52, r: 11, l: -4 },
+    { k: 'cosmos', x: 122, h: 78, r: 12, l: 3 },
+    { k: 'corn',   x: 156, h: 40, r: 8,  l: -2 },
+    { k: 'poppy',  x: 186, h: 60, r: 10, l: 4 },
+    { k: 'sun',    x: 210, h: 34, r: 7,  l: -2 }
+  ];
+  let s = '';
+  fl.forEach((f, i) => {
+    const top = 96 - f.h, tx = f.x + f.l;
+    const side = i % 2 ? 1 : -1, lx = f.x + side * 5, ly = 96 - f.h * 0.38;
+    s += `<path class="stem" d="M${f.x} 96 Q${f.x + f.l * 2} ${96 - f.h / 2} ${tx} ${top}"/>`;
+    s += `<ellipse class="leaf" cx="${lx}" cy="${ly}" rx="5.5" ry="2.2" transform="rotate(${-side * 35} ${lx} ${ly})"/>`;
+    s += bloom(f.k, tx, top, f.r);
+  });
+  $('#meadow').innerHTML = s;
+}
+
+/* ---------- state ---------- */
+const $ = s => document.querySelector(s);
+const norm = s => s.trim().toLocaleLowerCase();
+const clean = s => String(s).replace(/\s+/g, ' ').trim().slice(0, 60);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+let lang = (() => {
+  try { const l = localStorage.getItem(LKEY); if (l === 'it' || l === 'en') return l; } catch (e) {}
+  return (navigator.language || 'en').toLowerCase().startsWith('it') ? 'it' : 'en';
+})();
+let t = S[lang];
+
+function blank() { return { catalog: [], list: [] }; }
+
+function sanitize(d) {
+  if (!d || typeof d !== 'object') return null;
+  const catalog = [], seen = new Set();
+  for (const c of Array.isArray(d.catalog) ? d.catalog : []) {
+    const raw = typeof c === 'string' ? c : c && c.name;
+    if (typeof raw !== 'string') continue;
+    const name = clean(raw), k = norm(name);
+    if (!name || seen.has(k)) continue;
+    seen.add(k);
+    const n = c && Number.isFinite(c.n) ? Math.max(0, Math.floor(c.n)) : 0;
+    catalog.push({ name, n });
+  }
+  const list = [], names = new Set(), ids = new Set();
+  for (const i of Array.isArray(d.list) ? d.list : []) {
+    if (!i || typeof i.name !== 'string') continue;
+    const name = clean(i.name), k = norm(name);
+    if (!name || names.has(k)) continue;
+    names.add(k);
+    let id = typeof i.id === 'string' && i.id && !ids.has(i.id) ? i.id.slice(0, 20) : uid();
+    ids.add(id);
+    list.push({ id, name, done: !!i.done });
+  }
+  return { catalog, list };
+}
+
+function load() {
+  try { return sanitize(JSON.parse(localStorage.getItem(KEY))) || blank(); }
+  catch (e) { return blank(); }
+}
+
+let state = load();
+let editing = false;
+let toastTimer, reorderTimer, undoSnap = null;
+
+function save() {
+  hideToast();
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+}
+const snapshot = () => JSON.stringify(state);
+
+/* ---------- toast with undo ---------- */
+function toast(msg, snap) {
+  $('#toast-msg').textContent = msg;
+  $('#undo').hidden = !snap;
+  undoSnap = snap || null;
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, snap ? 6000 : 3500);
+}
+function hideToast() {
+  $('#toast').classList.remove('show');
+  undoSnap = null;
+}
+$('#undo').addEventListener('click', () => {
+  if (!undoSnap) return;
+  state = sanitize(JSON.parse(undoSnap)) || blank();
+  save(); render();
+});
+
+/* ---------- render ---------- */
+function row(it) {
+  const kind = kindOf(it.name), k = KINDS[kind];
+  const li = document.createElement('li');
+  li.className = 'row' + (it.done ? ' done' : '');
+  li.dataset.id = it.id;
+
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'item';
+  b.setAttribute('role', 'checkbox');
+  b.setAttribute('aria-checked', String(it.done));
+  b.insertAdjacentHTML('afterbegin',
+    `<svg class="box" viewBox="-16 -16 32 32" aria-hidden="true">` +
+    `<circle class="ring" r="10.5"/><circle class="bud" r="3.2" style="fill:${k.color}"/>` +
+    `<g class="bloom">${bloom(kind, 0, 0, 15)}</g></svg>`);
+  const sp = document.createElement('span');
+  sp.className = 'txt'; sp.textContent = it.name;
+  b.append(sp);
+
+  const d = document.createElement('button');
+  d.type = 'button'; d.className = 'del';
+  d.setAttribute('aria-label', t.remove(it.name));
+  d.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>');
+
+  li.append(b, d);
+  return li;
+}
+
+function updateActions() {
+  $('#empty').hidden = state.list.length > 0;
+  $('#rm-done').hidden = !state.list.some(i => i.done);
+  $('#rm-all').hidden = state.list.length === 0;
+}
+
+function renderChips() {
+  if (!state.catalog.length) editing = false;
+  const box = $('#chips');
+  box.replaceChildren();
+  const q = norm($('#q').value);
+  const onList = new Set(state.list.map(i => norm(i.name)));
+  const sorted = [...state.catalog].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, lang));
+  for (const c of sorted) {
+    if (!editing && onList.has(norm(c.name))) continue;
+    if (q && !norm(c.name).includes(q)) continue;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.dataset.name = c.name;
+    b.textContent = c.name;
+    if (editing) {
+      b.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>');
+      b.setAttribute('aria-label', t.dropUsed(c.name));
+    }
+    box.append(b);
+  }
+  box.classList.toggle('editing', editing);
+  $('#used-empty').hidden = state.catalog.length > 0;
+  $('#edit').hidden = state.catalog.length === 0;
+  $('#edit').textContent = editing ? t.done : t.edit;
+}
+
+function render() {
+  const active = document.activeElement;
+  const hold = active && active.closest ? active.closest('#list .row') : null;
+  const holdId = hold && hold.dataset.id, holdCls = hold && (active.classList.contains('del') ? '.del' : '.item');
+
+  const ul = $('#list');
+  ul.replaceChildren();
+  const ordered = [...state.list.filter(i => !i.done), ...state.list.filter(i => i.done)];
+  for (const it of ordered) ul.append(row(it));
+  updateActions();
+  renderChips();
+
+  if (holdId) {
+    const el = ul.querySelector(`.row[data-id="${holdId}"] ${holdCls}`);
+    if (el) el.focus({ preventScroll: true });
+  }
+}
+
+function flash(id) {
+  const li = $(`#list .row[data-id="${id}"]`);
+  if (!li) return;
+  li.classList.add('flash');
+  setTimeout(() => li.classList.remove('flash'), 900);
+}
+
+/* ---------- actions ---------- */
+function addItem(raw) {
+  const name = clean(raw);
+  if (!name) return;
+  const key = norm(name);
+  let cat = state.catalog.find(c => norm(c.name) === key);
+  if (!cat) { cat = { name, n: 0 }; state.catalog.push(cat); }
+  const existing = state.list.find(i => norm(i.name) === key);
+  let flashId;
+  if (existing) {
+    if (existing.done) { existing.done = false; cat.n++; }
+    flashId = existing.id;
+  } else {
+    flashId = uid();
+    state.list.push({ id: flashId, name: cat.name, done: false });
+    cat.n++;
+  }
+  save(); render(); flash(flashId);
+}
+
+$('#add').addEventListener('submit', e => {
+  e.preventDefault();
+  const q = $('#q');
+  if (!clean(q.value)) { q.focus(); return; }
+  addItem(q.value);
+  q.value = '';
+  renderChips();
+  q.focus();
+});
+$('#q').addEventListener('input', renderChips);
+
+$('#list').addEventListener('click', e => {
+  const li = e.target.closest('.row');
+  if (!li) return;
+  const it = state.list.find(i => i.id === li.dataset.id);
+  if (!it) return;
+  if (e.target.closest('.del')) {
+    const snap = snapshot();
+    state.list = state.list.filter(i => i !== it);
+    save(); render(); toast(t.removedOne(it.name), snap);
+  } else if (e.target.closest('.item')) {
+    it.done = !it.done;
+    li.classList.toggle('done', it.done);
+    li.querySelector('.item').setAttribute('aria-checked', String(it.done));
+    save(); updateActions();
+    clearTimeout(reorderTimer);
+    reorderTimer = setTimeout(render, 550);
+  }
+});
+
+$('#chips').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  const name = chip.dataset.name;
+  if (editing) {
+    const snap = snapshot();
+    state.catalog = state.catalog.filter(c => norm(c.name) !== norm(name));
+    save(); render(); toast(t.droppedUsed(name), snap);
+  } else {
+    addItem(name);
+    $('#q').value = '';
+    renderChips();
+  }
+});
+
+$('#edit').addEventListener('click', () => { editing = !editing; renderChips(); });
+
+$('#rm-done').addEventListener('click', () => {
+  const k = state.list.filter(i => i.done).length;
+  if (!k) return;
+  const snap = snapshot();
+  state.list = state.list.filter(i => !i.done);
+  save(); render(); toast(t.removedMany(k), snap);
+});
+$('#rm-all').addEventListener('click', () => {
+  if (!state.list.length) return;
+  const snap = snapshot();
+  state.list = [];
+  save(); render(); toast(t.cleared, snap);
+});
+
+/* ---------- backup and restore ---------- */
+async function backup() {
+  const data = JSON.stringify({ app: 'posy', v: 1, exported: new Date().toISOString(), catalog: state.catalog, list: state.list }, null, 2);
+  const name = `posy-${new Date().toISOString().slice(0, 10)}.json`;
+  if (matchMedia('(pointer:coarse)').matches && navigator.canShare) {
+    for (const type of ['application/json', 'text/plain']) {
+      const file = new File([data], name, { type });
+      if (!navigator.canShare({ files: [file] })) continue;
+      try { await navigator.share({ files: [file] }); return; }
+      catch (e) { if (e.name === 'AbortError') return; }
+    }
+  }
+  const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+$('#backup').addEventListener('click', backup);
+$('#restore').addEventListener('click', () => { $('#file').value = ''; $('#file').click(); });
+$('#file').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d || (!Array.isArray(d.catalog) && !Array.isArray(d.list))) throw new Error('shape');
+    const next = sanitize(d);
+    const snap = snapshot();
+    state = next;
+    save(); render(); toast(t.restored, snap);
+  } catch (err) {
+    toast(t.badFile);
+  }
+});
+
+/* ---------- language ---------- */
+function applyLang() {
+  t = S[lang];
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t[el.dataset.t]; });
+  $('#q').placeholder = t.placeholder;
+  $('#q').setAttribute('aria-label', t.placeholder);
+  render();
+}
+$('#lang').addEventListener('click', () => {
+  lang = lang === 'it' ? 'en' : 'it';
+  try { localStorage.setItem(LKEY, lang); } catch (e) {}
+  applyLang();
+});
+
+/* keep two open windows in step */
+window.addEventListener('storage', e => {
+  if (e.key === KEY) { state = load(); render(); }
+});
+
+/* ---------- start ---------- */
+drawMeadow();
+applyLang();
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+})();
+</script>
+</body>
+</html>
